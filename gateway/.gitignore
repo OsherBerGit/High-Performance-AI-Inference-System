@@ -1,0 +1,28 @@
+﻿## .NET Core / Visual Studio
+bin/
+obj/
+.vs/
+.vscode/
+*.user
+*.userosscache
+*.sln.docstates
+
+## Sensitive configuration files (Firebase & AppSettings)
+# Exclude the Firebase Service Account JSON key
+*.json
+!appsettings.Example.json
+!launchSettings.Example.json
+
+# Exclude application settings that contain connection strings or secrets
+appsettings.json
+appsettings.Development.json
+
+## User-specific files
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+## Publish output
+publish/

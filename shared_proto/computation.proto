@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package computation;
+
+service EngineService {
+  rpc ComputeFeatures (FeatureRequest) returns (FeatureResponse);
+}
+
+message FeatureRequest {
+  string request_id = 1;
+  bytes raw_data = 2;
+}
+
+message FeatureResponse {
+  string request_id = 1;
+  double shannon_entropy = 2;
+  double eccentricity = 3;
+  double confidence_score = 4;
+  string error_message = 5;
+}
