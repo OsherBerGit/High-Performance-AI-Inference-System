@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  engine:
+    build: 
+      context: ./engine
+      dockerfile: Dockerfile
+    ports:
+      - "50051:50051"
+    networks:
+      - hybrid-net
+
+  gateway:
+    build: 
+      context: ./gateway
+      dockerfile: Dockerfile
+    ports:
+      - "5110:5110"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - EngineServiceUrl=http://engine:50051
+    depends_on:
+      - engine
+    networks:
+      - hybrid-net
+
+networks:
+  hybrid-net:
+    driver: bridge

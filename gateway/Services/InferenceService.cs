@@ -1,6 +1,55 @@
-﻿namespace gateway.Services;
+﻿using Computation;
+using Gateway.Data;
+using Gateway.DTOs;
+using Gateway.Models;
+using gateway.Services.Interfaces;
+using Grpc.Net.Client;
+using Microsoft.EntityFrameworkCore;
 
-public class InferenceService
+namespace gateway.Services;
+
+public class InferenceService(AppDbContext _dbContext, IConfiguration _configuration) : IInferenceService
 {
-    
+    public async Task<InferenceResultDto?> AnalyzeAsync(int userId)
+    {
+        var user = await _dbContext.Users
+            .Include(u => u.Baseline)
+            .FirstOrDefaultAsync(u => u.Id == userId);
+
+        if (user is null) return null;
+        
+        var engineUrl = _configuration["EngineServiceUrl"] ?? "http://localhost:50051";
+        using var channel = GrpcChannel.ForAddress(engineUrl);
+        var client = new EngineService.EngineServiceClient(channel);
+
+        var request = new FeatureRequest 
+        {
+            RequestId = Guid.NewGuid().ToString(),
+            RawData = Google.Protobuf.ByteString.CopyFrom(user.Baseline?.RawBaseline ?? Array.Empty<byte>())
+        };
+        
+        var reply = await client.ComputeFeaturesAsync(request);
+        
+        var auditLog = new AuditLog
+        {
+            RequestId = reply.RequestId,
+            UserId = user.Id,
+            ShannonEntropy = reply.ShannonEntropy,
+            Eccentricity = reply.Eccentricity,
+            ConfidenceScore = reply.ConfidenceScore,
+            Timestamp = DateTime.UtcNow,
+            IsFlagged = reply.ConfidenceScore < 0.9 
+        };
+
+        _dbContext.AuditLogs.Add(auditLog);
+        await _dbContext.SaveChangesAsync();
+        
+        return new InferenceResultDto(
+            reply.RequestId, 
+            reply.ShannonEntropy, 
+            reply.Eccentricity, 
+            reply.ConfidenceScore, 
+            auditLog.IsFlagged
+        );
+    }
 }

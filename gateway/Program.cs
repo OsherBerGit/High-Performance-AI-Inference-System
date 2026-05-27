@@ -1,86 +1,61 @@
 using Gateway.Data;
 using Gateway.Models;
+using Gateway.Endpoints;
+using Gateway.Extensions;
 using Microsoft.EntityFrameworkCore;
-using Grpc.Net.Client;
-using Computation;
+using Gateway.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
 
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseInMemoryDatabase("HybridPipelineDb"));
+builder.Services.AddDbContext<AppDbContext>(options => 
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+SwaggerExtensions.AddSwaggerDocumentation(builder.Services);
+IdentityServiceExtensions.AddIdentityServices(builder.Services, builder.Configuration);
+RateLimitingExtensions.AddRateLimiterConfig(builder.Services);
+
+ServiceExtensions.AddApplicationServices(builder.Services);
+
+builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+
+builder.Services.AddMemoryCache();
 
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    context.Database.Migrate(); 
     
-    context.Database.EnsureCreated();
-
     if (!context.Users.Any())
     {
-        var testUser = new User
-        {
-            Username = "osher_analyst",
-            PasswordHash = "fake_bcrypt_hash_for_now",
-            Role = "Analyst"
-        };
-
-        context.Users.Add(testUser);
+        var testUser = new User { Username = "osher_analyst", PasswordHash = "password123", Role = "Analyst" };
+        context.Users.Add(testUser); 
         context.SaveChanges();
-
-        var userBaseline = new UserBaseline
-        {
-            UserId = testUser.Id,
-            RawBaseline = Enumerable.Repeat((byte)255, 100).ToArray() 
-        };
-
-        context.UserBaselines.Add(userBaseline);
+        
+        context.UserBaselines.Add(new UserBaseline { UserId = testUser.Id, RawBaseline = Enumerable.Repeat((byte)255, 100).ToArray() });
         context.SaveChanges();
     }
 }
 
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
+    app.UseSwagger(); 
     app.UseSwaggerUI();
 }
 
-app.MapPost("/api/analyze", async (AppDbContext dbContext) =>
-{
-    using var channel = GrpcChannel.ForAddress("http://localhost:50051");
-    
-    var client = new EngineService.EngineServiceClient(channel);
+app.UseExceptionHandler();
 
-    var user = dbContext.Users
-        .Include(u => u.Baseline)
-        .FirstOrDefault(u => u.Username == "osher_analyst");
+app.UseRateLimiter();
+app.UseAuthentication();
+app.UseAuthorization();
 
-    var request = new FeatureRequest 
-    {
-        RequestId = Guid.NewGuid().ToString(),
-        RawData = Google.Protobuf.ByteString.CopyFrom(user?.Baseline?.RawBaseline ?? Array.Empty<byte>())
-    };
-
-    try
-    {
-        var reply = await client.ComputeFeaturesAsync(request);
-        
-        return Results.Ok(new 
-        {
-            RequestId = reply.RequestId,
-            Entropy = reply.ShannonEntropy,
-            Eccentricity = reply.Eccentricity,
-            Confidence = reply.ConfidenceScore
-        });
-    }
-    catch (Exception ex)
-    {
-        return Results.Problem($"Rust Engine Error: {ex.Message}");
-    }
-});
+app.MapAuthEndpoints();
+app.MapInferenceEndpoints();
+app.MapAuditEndpoints();
+app.MapBaselineEndpoints();
 
 app.Run();
