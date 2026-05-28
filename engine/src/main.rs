@@ -72,3 +72,43 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::HashMap;
+
+    fn compute_shannon_entropy(data: &[u8]) -> f64 {
+        if data.is_empty() { return 0.0; }
+        let mut counts = HashMap::new();
+        for &b in data {
+            *counts.entry(b).or_insert(0) += 1;
+        }
+        let len = data.len() as f64;
+        counts.values().fold(0.0, |acc, &count| {
+            let p = count as f64 / len;
+            acc - p * p.log2()
+        })
+    }
+
+    #[test]
+    fn test_zero_entropy_for_uniform_data() {
+        let data = vec![0, 0, 0, 0, 0];
+        let entropy = compute_shannon_entropy(&data);
+        assert_eq!(entropy, 0.0);
+    }
+
+    #[test]
+    fn test_high_entropy_for_diverse_data() {
+        let data = vec![1, 2, 3, 4];
+        let entropy = compute_shannon_entropy(&data);
+        assert_eq!(entropy, 2.0);
+    }
+
+    #[test]
+    fn test_empty_payload_handling() {
+        let data: Vec<u8> = vec![];
+        let entropy = compute_shannon_entropy(&data);
+        assert_eq!(entropy, 0.0);
+    }
+}

@@ -11,7 +11,6 @@ public static class ServiceExtensions
         services.AddScoped<IInferenceService, InferenceService>();
         services.AddScoped<IAuditService, AuditService>();
         services.AddScoped<IBaselineService, BaselineService>();
-        
         services.AddScoped<ITokenService, TokenService>();
         services.AddSingleton<ITokenBlacklistService, TokenBlacklistService>();
 

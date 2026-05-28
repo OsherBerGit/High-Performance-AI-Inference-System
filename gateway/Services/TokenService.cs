@@ -19,9 +19,7 @@ public class TokenService(IConfiguration _configuration) : ITokenService
         };
         claims.AddRange(user.Role.Split(',').Select(role => new Claim(ClaimTypes.Role, role.Trim())));
 
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
-            _configuration.GetSection("JwtSettings:SecretKey").Value!));
-
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration.GetSection("JwtSettings:SecretKey").Value!));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
         var token = new JwtSecurityToken(

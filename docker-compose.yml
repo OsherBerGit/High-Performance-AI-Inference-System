@@ -1,29 +1,45 @@
-version: '3.8'
-
 services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: hybrid_db
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: HybridPipelineDb
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
   engine:
-    build: 
+    build:
       context: ./engine
-      dockerfile: Dockerfile
+    container_name: hybrid_engine
     ports:
       - "50051:50051"
-    networks:
-      - hybrid-net
 
   gateway:
-    build: 
+    build:
       context: ./gateway
-      dockerfile: Dockerfile
-    ports:
-      - "5110:5110"
+    container_name: hybrid_gateway
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=HybridPipelineDb;Username=${DB_USER};Password=${DB_PASSWORD}
       - EngineServiceUrl=http://engine:50051
+      - ASPNETCORE_HTTP_PORTS=8080 # ASP.NET 8 default container port
+    ports:
+      - "5110:8080" # Map local 5110 to container 8080
     depends_on:
       - engine
-    networks:
-      - hybrid-net
+      - postgres
 
-networks:
-  hybrid-net:
-    driver: bridge
+  dashboard:
+    build:
+      context: ./dashboard
+    container_name: hybrid_dashboard
+    ports:
+      - "3000:80" # The React app will be accessible at http://localhost:3000
+    depends_on:
+      - gateway
+
+volumes:
+  pgdata:

@@ -7,6 +7,9 @@
 *.userosscache
 *.sln.docstates
 
+# Environment variables
+.env
+
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/
@@ -22,9 +25,6 @@ bld/
 [Ll]og/
 
 # Visual Studio 2015 cache/options directory
-.vs/
-
-# Visual Studio 2017 cache/options directory
 .vs/
 
 # Rider temporary files

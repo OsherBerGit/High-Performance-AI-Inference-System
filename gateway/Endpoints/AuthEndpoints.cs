@@ -7,7 +7,7 @@ public static class AuthEndpoints
 {
     public static void MapAuthEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapPost("/api/login", async (UserLoginDto loginDto, IAuthService authService) =>
+        app.MapPost("/api/auth/login", async (UserLoginDto loginDto, IAuthService authService) =>
         {
             var token = await authService.LoginAsync(loginDto);
             

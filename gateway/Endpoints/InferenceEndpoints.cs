@@ -8,7 +8,7 @@ public static class InferenceEndpoints
 {
     public static void MapInferenceEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapPost("/api/analyze", async (ClaimsPrincipal user, IInferenceService inferenceService) =>
+        app.MapPost("/api/inference/analyze", async (ClaimsPrincipal user, IInferenceService inferenceService) =>
         {
             var userId = user.GetUserId();
             var result = await inferenceService.AnalyzeAsync(userId);

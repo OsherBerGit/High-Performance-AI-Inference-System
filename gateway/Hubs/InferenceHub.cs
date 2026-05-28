@@ -1,6 +1,5 @@
-﻿namespace gateway.Hubs;
+﻿using Microsoft.AspNetCore.SignalR;
 
-public class InferenceHub
-{
-    
-}
+namespace gateway.Hubs;
+
+public class InferenceHub : Hub { }

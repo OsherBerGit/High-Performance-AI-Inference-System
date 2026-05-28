@@ -17,19 +17,13 @@ public class BaselineService(AppDbContext _context) : IBaselineService
         
         if (user.Baseline is null)
         {
-            var userBaseline = new UserBaseline
-            {
-                RawBaseline = newBaseline,
-                UserId = user.Id
-            };
-                
+            var userBaseline = new UserBaseline { RawBaseline = newBaseline, UserId = user.Id };
             user.Baseline = userBaseline;
         }
         else
             user.Baseline.RawBaseline = newBaseline;
 
         await _context.SaveChangesAsync();
-        
         return true;
     }
 }

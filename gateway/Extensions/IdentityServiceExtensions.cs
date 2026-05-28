@@ -15,11 +15,19 @@ public static class IdentityServiceExtensions
                 {
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["JwtSettings:SecretKey"]!)),
-                    ValidateIssuer = true,
-                    ValidIssuer = config["JwtSettings:Issuer"],
-                    ValidateAudience = true,
-                    ValidAudience = config["JwtSettings:Audience"],
-                    ClockSkew = TimeSpan.Zero 
+                    ValidateIssuer = false,
+                    ValidateAudience = false,
+                    ValidateLifetime = true,
+                    ClockSkew = TimeSpan.Zero
+                };
+                    
+                options.Events = new JwtBearerEvents
+                {
+                    OnAuthenticationFailed = context =>
+                    {
+                        Console.WriteLine($"\n=== JWT FAILED: {context.Exception.Message} ===\n");
+                        return Task.CompletedTask;
+                    }
                 };
             });
 

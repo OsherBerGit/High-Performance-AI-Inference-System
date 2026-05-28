@@ -11,8 +11,5 @@ public class TokenBlacklistService(IMemoryCache _cache) : ITokenBlacklistService
         return Task.CompletedTask;
     }
 
-    public Task<bool> IsTokenBlacklistedAsync(string token) 
-    {
-        return Task.FromResult(_cache.TryGetValue(token, out _));
-    }
+    public Task<bool> IsTokenBlacklistedAsync(string token) => Task.FromResult(_cache.TryGetValue(token, out _));
 }
