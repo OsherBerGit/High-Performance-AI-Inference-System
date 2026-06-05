@@ -101,3 +101,37 @@ pub fn calculate_confidence(data: &[u8], baseline: &[u8]) -> f64 {
 
     confidence
 }
+
+pub fn calculate_standard_deviation(data: &[u8]) -> f64 {
+    if data.is_empty() { return 0.0; }
+    
+    let mean = data.iter().map(|&x| x as f64).sum::<f64>() / (data.len() as f64);
+    let variance = data.iter().map(|&x| {
+        let diff = x as f64 - mean;
+        diff * diff
+    }).sum::<f64>() / (data.len() as f64);
+    
+    variance.sqrt()
+}
+
+pub fn calculate_mean_absolute_deviation(data: &[u8]) -> f64 {
+    if data.is_empty() { return 0.0; }
+    
+    let mean = data.iter().map(|&x| x as f64).sum::<f64>() / (data.len() as f64);
+    let mad = data.iter().map(|&x| (x as f64 - mean).abs()).sum::<f64>() / (data.len() as f64);
+    
+    mad
+}
+
+pub fn calculate_peak_to_average_ratio(data: &[u8]) -> f64 {
+    if data.is_empty() { return 0.0; }
+    
+    let peak = data.iter().copied().max().unwrap_or(0) as f64;
+    let mean = data.iter().map(|&x| x as f64).sum::<f64>() / (data.len() as f64);
+    
+    if mean == 0.0 {
+        return 0.0;
+    }
+    
+    peak / mean
+}

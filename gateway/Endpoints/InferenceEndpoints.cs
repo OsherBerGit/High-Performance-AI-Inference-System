@@ -12,11 +12,7 @@ public static class InferenceEndpoints
         {
             var userId = user.GetUserId();
             var result = await inferenceService.AnalyzeAsync(userId);
-            
-            if (result is null) 
-                return Results.Unauthorized();
-
-            return Results.Ok(result);
+            return result is null ? Results.Unauthorized() : Results.Ok(result);
         })
         .RequireAuthorization()
         .RequireRateLimiting("fixed_policy");

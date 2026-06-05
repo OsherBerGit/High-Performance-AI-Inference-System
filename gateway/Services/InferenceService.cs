@@ -43,6 +43,9 @@ public class InferenceService(AppDbContext _dbContext, IConfiguration _configura
                 ShannonEntropy = reply.ShannonEntropy,
                 Eccentricity = reply.Eccentricity,
                 ConfidenceScore = reply.ConfidenceScore,
+                StandardDeviation = reply.StandardDeviation,
+                MeanAbsoluteDeviation = reply.MeanAbsoluteDeviation,
+                PeakToAverageRatio = reply.PeakToAverageRatio,
                 Timestamp = DateTime.UtcNow,
                 IsFlagged = reply.ConfidenceScore < 0.9 
             };
@@ -55,11 +58,13 @@ public class InferenceService(AppDbContext _dbContext, IConfiguration _configura
                 reply.ShannonEntropy, 
                 reply.Eccentricity, 
                 reply.ConfidenceScore, 
-                auditLog.IsFlagged
+                auditLog.IsFlagged,
+                reply.StandardDeviation,
+                reply.MeanAbsoluteDeviation,
+                reply.PeakToAverageRatio
             );
         
             await _hubContext.Clients.All.SendAsync("ReceiveInferenceUpdate", lastResult);
-        
             await Task.Delay(1000);
         }
     

@@ -10,11 +10,7 @@ public static class AuthEndpoints
         app.MapPost("/api/auth/login", async (UserLoginDto loginDto, IAuthService authService) =>
         {
             var token = await authService.LoginAsync(loginDto);
-            
-            if (token is null)
-                return Results.Unauthorized();
-                
-            return Results.Ok(new { Token = token });
+            return token is null ? Results.Unauthorized() : Results.Ok(new { Token = token });
         });
     }
 }

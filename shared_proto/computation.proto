@@ -17,4 +17,7 @@ message FeatureResponse {
   double eccentricity = 3;
   double confidence_score = 4;
   string error_message = 5;
+  double standard_deviation = 6;
+  double mean_absolute_deviation = 7;
+  double peak_to_average_ratio = 8;
 }

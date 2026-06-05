@@ -27,8 +27,7 @@ impl EngineService for HybridEngine {
     ) -> Result<Response<FeatureResponse>, Status> {
         let mut state = self.state.lock().unwrap();
         state.total_requests_processed += 1;
-        println!("Total requests processed: {}",state.total_requests_processed);
-
+        println!("Total requests processed: {}", state.total_requests_processed);
         drop(state);
 
         let inner_req = request.into_inner();
@@ -41,10 +40,17 @@ impl EngineService for HybridEngine {
         let confidence = features::calculate_confidence(&inner_req.raw_data, &dummy_baseline);
 
         let mut raw_data = vec![0u8; 100];
+        if inner_req.raw_data.len() >= 100 {
+            raw_data.copy_from_slice(&inner_req.raw_data[..100]);
+        }
         raw_data[44] = 255;
         raw_data[45] = 255;
         raw_data[55] = 255;
         let eccentricity = features::calculate_eccentricity(&raw_data);
+
+        let std_dev = features::calculate_standard_deviation(&inner_req.raw_data);
+        let mad = features::calculate_mean_absolute_deviation(&inner_req.raw_data);
+        let par = features::calculate_peak_to_average_ratio(&inner_req.raw_data);
 
         let reply = FeatureResponse {
             request_id: inner_req.request_id,
@@ -52,6 +58,9 @@ impl EngineService for HybridEngine {
             eccentricity: eccentricity,
             confidence_score: confidence,
             error_message: String::new(),
+            standard_deviation: std_dev,
+            mean_absolute_deviation: mad,
+            peak_to_average_ratio: par,
         };
 
         Ok(Response::new(reply))

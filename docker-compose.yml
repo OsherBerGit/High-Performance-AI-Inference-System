@@ -3,13 +3,18 @@ services:
     image: postgres:15-alpine
     container_name: hybrid_db
     environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
       POSTGRES_DB: HybridPipelineDb
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d HybridPipelineDb"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   engine:
     build:
@@ -23,21 +28,23 @@ services:
       context: ./gateway
     container_name: hybrid_gateway
     environment:
-      - ConnectionStrings__DefaultConnection=Host=postgres;Database=HybridPipelineDb;Username=${DB_USER};Password=${DB_PASSWORD}
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=HybridPipelineDb;Username=${DB_USER:-postgres};Password=${DB_PASSWORD:-postgres}
       - EngineServiceUrl=http://engine:50051
-      - ASPNETCORE_HTTP_PORTS=8080 # ASP.NET 8 default container port
+      - ASPNETCORE_HTTP_PORTS=8080
     ports:
-      - "5110:8080" # Map local 5110 to container 8080
+      - "5110:8080"
     depends_on:
-      - engine
-      - postgres
+      postgres:
+        condition: service_healthy
+      engine:
+        condition: service_started
 
   dashboard:
     build:
       context: ./dashboard
     container_name: hybrid_dashboard
     ports:
-      - "3000:80" # The React app will be accessible at http://localhost:3000
+      - "3000:80"
     depends_on:
       - gateway
 

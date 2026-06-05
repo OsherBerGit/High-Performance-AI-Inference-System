@@ -79,5 +79,6 @@ app.MapInferenceEndpoints();
 app.MapAuditEndpoints();
 app.MapBaselineEndpoints();
 app.MapHub<InferenceHub>("/hubs/inference");
+app.MapHealthEndpoints();
 
 app.Run();

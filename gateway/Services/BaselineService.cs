@@ -16,10 +16,7 @@ public class BaselineService(AppDbContext _context) : IBaselineService
         if (user is null) return false;
         
         if (user.Baseline is null)
-        {
-            var userBaseline = new UserBaseline { RawBaseline = newBaseline, UserId = user.Id };
-            user.Baseline = userBaseline;
-        }
+            user.Baseline = new UserBaseline { RawBaseline = newBaseline, UserId = user.Id };
         else
             user.Baseline.RawBaseline = newBaseline;
 
